@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GRID FORGE v2.0 — Growth Edition</title>
+<meta name="description" content="Instagram growth engine: forge grids, captions, hashtags, and stories." />
+<style>
+  :root {
+    --bg: #0a0d0a;
+    --bg-2: #11181a;
+    --bg-3: #1a2426;
+    --ink: #d8e3d6;
+    --ink-dim: #8a9c8a;
+    --acid: #b6ff3c;
+    --copper: #c97a3a;
+    --ember: #ff5a2e;
+    --mist: #6ec1c4;
+    --void: #050605;
+    --line: #2a3839;
+    --line-2: #3a4d4f;
+    --warn: #ffcc33;
+    --good: #4ade80;
+    --bad: #ef4444;
+    --shadow: 0 0 0 1px var(--line), 0 0 24px rgba(0,0,0,0.6);
+    --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, Menlo, Consolas, monospace;
+    --serif: 'Times New Roman', Georgia, serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(182,255,60,0.06), transparent 60%),
+      radial-gradient(900px 500px at 110% 110%, rgba(110,193,196,0.05), transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--acid); color: var(--void); }
+
+  a { color: var(--acid); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  button, input, select, textarea {
+    font-family: inherit;
+    color: inherit;
+    background: transparent;
+  }
+
+  /* === Layout === */
+  .app {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+  }
+
+  /* === Header === */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--bg-2), var(--bg));
+    box-shadow: var(--shadow);
+    border-radius: 4px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    letter-spacing: 0.08em;
+  }
+  .brand .logo {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    border: 1px solid var(--acid);
+    color: var(--acid);
+    box-shadow: inset 0 0 12px rgba(182,255,60,0.25);
+  }
+  .brand h1 {
+    font-size: 14px; margin: 0; font-weight: 600;
+    text-transform: uppercase;
+  }
+  .brand h1 span { color: var(--acid); }
+  .topbar .meta {
+    display: flex; gap: 14px; align-items: center;
+    color: var(--ink-dim); font-size: 11px;
+  }
+  .pill {
+    padding: 3px 8px;
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-dim);
+  }
+  .pill.acid { color: var(--acid); border-color: var(--acid); }
+  .pill.copper { color: var(--copper); border-color: var(--copper); }
+  .pill.ember { color: var(--ember); border-color: var(--ember); }
+  .pill.mist { color: var(--mist); border-color: var(--mist); }
+
+  .terminal {
+    margin-top: 14px;
+    border: 1px solid var(--line);
+    background: var(--void);
+    color: var(--ink);
+    font-size: 12px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .terminal .term-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    background: #0b100b;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-dim);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #2a2a2a; }
+  .dot.r { background: #ff5f56; }
+  .dot.y { background: #ffbd2e; }
+  .dot.g { background: #27c93f; }
+  .term-body { padding: 10px 12px; min-height: 86px; max-height: 200px; overflow: auto; }
+  .term-body p { margin: 0 0 4px; white-space: pre-wrap; }
+  .term-body .ok { color: var(--good); }
+  .term-body .warn { color: var(--warn); }
+  .term-body .err { color: var(--bad); }
+  .term-body .acid { color: var(--acid); }
+  .term-body .dim { color: var(--ink-dim); }
+  .caret { display: inline-block; width: 8px; background: var(--acid); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* === Grid Sections === */
+  .grid-2 {
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-top: 16px;
+  }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .panel {
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--bg-2), var(--bg-3));
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+  }
+  .panel header {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 14px; border-bottom: 1px solid var(--line);
+    background: rgba(0,0,0,0.25);
+  }
+  .panel header h2 {
+    margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--acid);
+  }
+  .panel header .sub { font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.18em; }
+  .panel .body { padding: 14px; }
+
+  /* === Upload Chamber === */
+  .chamber {
+    border: 1.5px dashed var(--line-2);
+    border-radius: 4px;
+    padding: 24px;
+    text-align: center;
+    color: var(--ink-dim);
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    cursor: pointer;
+  }
+  .chamber.dragover { border-color: var(--acid); color: var(--acid); background: rgba(182,255,60,0.04); }
+  .chamber .big { font-size: 13px; color: var(--ink); margin-bottom: 6px; }
+  .chamber small { display: block; margin-top: 4px; font-size: 10px; }
+
+  .thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .thumb {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--line);
+    background: var(--void);
+    overflow: hidden;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .x {
+    position: absolute; top: 2px; right: 2px;
+    background: rgba(0,0,0,0.7); color: var(--ink);
+    border: 1px solid var(--line-2);
+    width: 18px; height: 18px; line-height: 16px;
+    font-size: 11px; cursor: pointer; text-align: center;
+  }
+  .thumb .x:hover { color: var(--ember); border-color: var(--ember); }
+
+  /* === Layout Picker === */
+  .layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 8px;
+  }
+  .layout {
+    border: 1px solid var(--line-2);
+    background: var(--void);
+    aspect-ratio: 1 / 1;
+    display: grid; place-items: center;
+    cursor: pointer;
+    position: relative;
+    border-radius: 2px;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .layout:hover { border-color: var(--ink-dim); }
+  .layout.selected { border-color: var(--acid); box-shadow: 0 0 0 1px var(--acid); }
+  .layout .mini {
+    display: grid; gap: 1px;
+    width: 60%; height: 60%;
+  }
+  .layout .mini i {
+    background: var(--ink-dim);
+    display: block;
+  }
+  .layout.selected .mini i { background: var(--acid); }
+  .layout .label {
+    position: absolute; bottom: 2px; left: 0; right: 0;
+    text-align: center; font-size: 9px; color: var(--ink-dim);
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .layout.selected .label { color: var(--acid); }
+
+  /* === Controls === */
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row.between { justify-content: space-between; }
+  .row + .row { margin-top: 10px; }
+  .group { display: flex; flex-direction: column; gap: 4px; }
+  .group label { font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.12em; }
+  .field {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--line-2);
+    background: var(--void);
+    border-radius: 2px;
+  }
+  .field input, .field select, .field textarea {
+    border: 0; outline: 0; background: transparent; color: var(--ink);
+    width: 100%; font-size: 12px;
+  }
+  .field input[type="color"] { padding: 0; width: 26px; height: 20px; border: 0; background: transparent; cursor: pointer; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid var(--acid);
+    color: var(--acid);
+    background: rgba(182,255,60,0.05);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    border-radius: 2px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .btn:hover { background: var(--acid); color: var(--void); }
+  .btn.copper { border-color: var(--copper); color: var(--copper); background: rgba(201,122,58,0.05); }
+  .btn.copper:hover { background: var(--copper); color: var(--void); }
+  .btn.ember { border-color: var(--ember); color: var(--ember); background: rgba(255,90,46,0.05); }
+  .btn.ember:hover { background: var(--ember); color: var(--void); }
+  .btn.mist { border-color: var(--mist); color: var(--mist); background: rgba(110,193,196,0.05); }
+  .btn.mist:hover { background: var(--mist); color: var(--void); }
+  .btn.ghost { border-color: var(--line-2); color: var(--ink-dim); background: transparent; }
+  .btn.ghost:hover { background: var(--line); color: var(--ink); }
+  .btn.small { padding: 4px 8px; font-size: 10px; }
+
+  /* === Forge Output === */
+  .forge-stage {
+    background: var(--void);
+    border: 1px solid var(--line);
+    min-height: 280px;
+    padding: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 2px;
+    overflow: auto;
+  }
+  .grid-canvas {
+    display: grid;
+    gap: 2px;
+    background: var(--void);
+  }
+  .grid-canvas .cell {
+    background: #1a1a1a;
+    overflow: hidden;
+    position: relative;
+  }
+  .grid-canvas .cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .grid-canvas .cell .num {
+    position: absolute; top: 4px; left: 4px;
+    font-size: 10px; color: var(--acid);
+    background: rgba(0,0,0,0.6); padding: 1px 4px;
+    border: 1px solid var(--line-2);
+  }
+  .grid-canvas .cell .puz {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.85);
+    color: var(--acid);
+    display: grid; place-items: center;
+    font-size: 14px; cursor: pointer;
+  }
+
+  /* Border styles applied to .grid-canvas */
+  .border-none { background: var(--void); gap: 2px; }
+  .border-acid { background: var(--acid); gap: 3px; padding: 3px; }
+  .border-copper { background: var(--copper); gap: 4px; padding: 4px; }
+  .border-ember { background: var(--ember); gap: 3px; padding: 3px; }
+  .border-mist { background: var(--mist); gap: 3px; padding: 3px; }
+  .border-double {
+    background: var(--void);
+    gap: 0;
+    padding: 4px;
+    outline: 2px solid var(--ink-dim);
+    outline-offset: 2px;
+  }
+  .border-dashed { background: var(--void); gap: 6px; padding: 4px; }
+  .border-void { background: var(--void); gap: 0; padding: 0; }
+
+  /* === Easter Egg Vault === */
+  .vault {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;
+  }
+  .egg {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--line-2);
+    background: var(--void);
+    display: grid; place-items: center;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+  .egg .sym { font-size: 22px; color: var(--ink-dim); }
+  .egg.locked { color: var(--ink-dim); }
+  .egg.unlocked { border-color: var(--acid); }
+  .egg.unlocked .sym { color: var(--acid); }
+  .egg.puzzle { background: repeating-linear-gradient(45deg, #111 0 6px, #1a1a1a 6px 12px); }
+  .egg.visible { background: var(--bg-3); }
+  .egg.mystery { background: #000; }
+  .egg.mystery .sym { color: var(--copper); }
+  .egg .tag {
+    position: absolute; bottom: 2px; left: 2px; right: 2px;
+    text-align: center; font-size: 9px; color: var(--ink-dim);
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .egg.unlocked .tag { color: var(--acid); }
+
+  /* === Tabs === */
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .tab {
+    padding: 6px 10px;
+    border: 1px solid var(--line-2);
+    background: var(--bg-2);
+    cursor: pointer;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-dim);
+    border-radius: 2px;
+  }
+  .tab.active { border-color: var(--acid); color: var(--acid); background: rgba(182,255,60,0.05); }
+
+  /* === Captions / Hashtags === */
+  .output-box {
+    border: 1px solid var(--line-2);
+    background: var(--void);
+    padding: 10px;
+    border-radius: 2px;
+    min-height: 90px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    color: var(--ink);
+  }
+  .output-box .dim { color: var(--ink-dim); }
+
+  /* === Story === */
+  .story {
+    width: 180px; height: 320px;
+    border: 1px solid var(--line-2);
+    background: var(--bg-2);
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+  }
+  .story .hook {
+    position: absolute; left: 8px; right: 8px;
+    text-align: center; color: var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .story .hook.top { top: 12px; }
+  .story .hook.mid { top: 50%; transform: translateY(-50%); }
+  .story .hook.bot { bottom: 12px; }
+  .story .meta {
+    position: absolute; top: 6px; left: 8px;
+    font-size: 9px; color: var(--ink-dim);
+    text-transform: uppercase; letter-spacing: 0.16em;
+  }
+
+  /* === Quotes === */
+  .quote {
+    border-left: 2px solid var(--acid);
+    padding: 8px 12px;
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 15px;
+    line-height: 1.4;
+    background: rgba(182,255,60,0.03);
+  }
+  .quote .who { display: block; margin-top: 6px; font-family: var(--mono); font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.14em; }
+
+  /* === Toggle === */
+  .switch {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: 11px; color: var(--ink-dim);
+  }
+  .switch input { display: none; }
+  .switch .track {
+    width: 32px; height: 16px; border: 1px solid var(--line-2); background: var(--void);
+    position: relative; border-radius: 999px; transition: 0.15s;
+  }
+  .switch .track::after {
+    content: ""; position: absolute; top: 1px; left: 1px;
+    width: 12px; height: 12px; background: var(--ink-dim); border-radius: 50%;
+    transition: 0.15s;
+  }
+  .switch input:checked + .track { border-color: var(--acid); background: rgba(182,255,60,0.1); }
+  .switch input:checked + .track::after { left: 17px; background: var(--acid); }
+
+  /* === Sound bar === */
+  .soundbar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--void);
+    border-top: 1px solid var(--line);
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 12px;
+    z-index: 50;
+  }
+  .soundbar .eq { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+  .soundbar .eq i {
+    width: 2px; background: var(--acid); height: 6px;
+    animation: eq 1.2s ease-in-out infinite;
+  }
+  .soundbar .eq i:nth-child(2) { animation-delay: 0.1s; }
+  .soundbar .eq i:nth-child(3) { animation-delay: 0.2s; }
+  .soundbar .eq i:nth-child(4) { animation-delay: 0.3s; }
+  .soundbar .eq i:nth-child(5) { animation-delay: 0.4s; }
+  .soundbar.off .eq i { background: var(--line-2); animation: none; }
+  @keyframes eq {
+    0%, 100% { height: 3px; }
+    50% { height: 14px; }
+  }
+  .soundbar .title { font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.14em; }
+
+  /* === Modal === */
+  .modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal.open { display: flex; }
+  .modal .box {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    max-width: 540px; width: 100%;
+    max-height: 80vh; overflow: auto;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+  }
+  .modal header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid var(--line);
+  }
+  .modal header h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--acid); }
+  .modal .close { cursor: pointer; color: var(--ink-dim); font-size: 18px; }
+  .modal .body { padding: 16px; font-size: 13px; }
+  .modal .body p { margin: 0 0 10px; }
+  .modal .body p:last-child { margin-bottom: 0; }
+
+  /* === Gift gallery === */
+  .gallery {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px;
+  }
+  .gift {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--line-2);
+    background: var(--void);
+    overflow: hidden;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .gift img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gift .gift-id {
+    position: absolute; bottom: 2px; left: 2px; right: 2px;
+    text-align: center; font-size: 9px;
+    background: rgba(0,0,0,0.6); color: var(--ink);
+    padding: 1px 0; letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .gift.selected { border-color: var(--acid); box-shadow: 0 0 0 1px var(--acid); }
+
+  /* === Misc === */
+  .dim { color: var(--ink-dim); }
+  .acid { color: var(--acid); }
+  .copper { color: var(--copper); }
+  .ember { color: var(--ember); }
+  .mist { color: var(--mist); }
+  .small { font-size: 11px; }
+  .tiny { font-size: 10px; }
+  .upper { text-transform: uppercase; letter-spacing: 0.12em; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .hidden { display: none !important; }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-dim); }
+</style>
+</head>
+<body>
+  <link rel="icon" href="/icon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">▣</div>
+      <h1>GRID <span>FORGE</span> v2.0 — Growth Edition</h1>
+    </div>
+    <div class="meta">
+      <span class="pill acid" id="statusPill">Online</span>
+      <span class="pill" id="growthPill">Growth: Off</span>
+      <span class="pill copper" id="eggCountPill">Eggs 0/10</span>
+    </div>
+  </header>
+
+  <!-- TERMINAL -->
+  <section class="terminal" aria-label="system log">
+    <div class="term-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="dim small">/forge/sys.log</span>
+    </div>
+    <div class="term-body" id="termBody" aria-live="polite"></div>
+  </section>
+
+  <!-- MAIN: UPLOAD + LAYOUT -->
+  <div class="grid-2">
+
+    <!-- Upload Chamber -->
+    <section class="panel">
+      <header>
+        <h2>① Upload Chamber</h2>
+        <span class="sub">drop images · or click</span>
+      </header>
+      <div class="body">
+        <div id="chamber" class="chamber" tabindex="0" role="button" aria-label="Upload images">
+          <div class="big">⬢ Drop a folder of images</div>
+          <div class="dim small">or <span class="acid">click to browse</span> · png · jpg · webp</div>
+          <small>Tip: 9 images for a perfect 3×3 grid</small>
+        </div>
+        <input type="file" id="fileInput" multiple accept="image/*" style="display:none" />
+        <div id="thumbs" class="thumbs" aria-label="uploaded images"></div>
+        <div class="row between mt-12">
+          <div class="row">
+            <button class="btn small ghost" id="clearAll">Clear</button>
+            <button class="btn small ghost" id="sortByName">Sort: Name</button>
+            <button class="btn small ghost" id="reverseOrder">Reverse</button>
+          </div>
+          <div class="row">
+            <span class="dim small"><span id="imgCount">0</span> ready</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layout Forge -->
+    <section class="panel">
+      <header>
+        <h2>② Layout Forge</h2>
+        <span class="sub">12 grid archetypes</span>
+      </header>
+      <div class="body">
+        <div class="layout-grid" id="layoutGrid"></div>
+        <div class="row mt-12">
+          <div class="group" style="flex:1">
+            <label>Border Style</label>
+            <div class="row" id="borderRow">
+              <button class="btn small ghost" data-border="none">None</button>
+              <button class="btn small ghost" data-border="acid">Acid</button>
+              <button class="btn small ghost" data-border="copper">Copper</button>
+              <button class="btn small ghost" data-border="ember">Ember</button>
+              <button class="btn small ghost" data-border="mist">Mist</button>
+              <button class="btn small ghost" data-border="double">Double</button>
+              <button class="btn small ghost" data-border="dashed">Dashed</button>
+              <button class="btn small ghost" data-border="void">Void</button>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-12 between">
+          <div class="row">
+            <label class="switch">
+              <input type="checkbox" id="growthToggle" />
+              <span class="track"></span>
+              <span>Growth Mode</span>
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn small" id="forgeBtn">⚒ Forge</button>
+            <button class="btn small copper" id="exportBtn">⇩ Export</button>
+            <button class="btn small ghost" id="shuffleBtn">⇄ Shuffle</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- FORGE OUTPUT -->
+  <section class="panel mt-16">
+    <header>
+      <h2>③ Forge Output</h2>
+      <span class="sub" id="forgeMeta">—</span>
+    </header>
+    <div class="body">
+      <div class="forge-stage" id="forgeStage">
+        <div class="dim small">No grid forged yet. Upload images, choose a layout, and click <span class="acid">⚒ Forge</span>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GROWTH PANEL -->
+  <div class="grid-2 mt-16">
+    <section class="panel">
+      <header>
+        <h2>④ Growth Panel</h2>
+        <span class="sub">captions · hashtags · stories</span>
+      </header>
+      <div class="body">
+        <div class="tabs" id="growthTabs">
+          <div class="tab active" data-tab="caption">Caption</div>
+          <div class="tab" data-tab="hashtag">Hashtags</div>
+          <div class="tab" data-tab="story">Story</div>
+          <div class="tab" data-tab="quote">Quote</div>
+        </div>
+
+        <!-- Caption tab -->
+        <div class="tab-pane" data-pane="caption">
+          <div class="row">
+            <div class="group" style="flex:1">
+              <label>Goal</label>
+              <div class="field"><select id="capGoal">
+                <option value="awareness">Awareness</option>
+                <option value="engagement">Engagement</option>
+                <option value="followers">Followers</option>
+                <option value="traffic">Traffic</option>
+              </select></div>
+            </div>
+            <div class="group" style="flex:1">
+              <label>Tone</label>
+              <div class="field"><select id="capTone">
+                <option value="direct">Direct</option>
+                <option value="poetic">Poetic</option>
+                <option value="playful">Playful</option>
+                <option value="gritty">Gritty</option>
+              </select></div>
+            </div>
+          </div>
+          <div class="row mt-12">
+            <button class="btn small" id="capGen">✎ Generate Caption</button>
+            <button class="btn small ghost" id="capCopy">⧉ Copy</button>
+          </div>
+          <div class="output-box mt-12" id="capOut"><span class="dim">No caption generated yet.</span></div>
+        </div>
+
+        <!-- Hashtag tab -->
+        <div class="tab-pane hidden" data-pane="hashtag">
+          <div class="row">
+            <div class="group" style="flex:1">
+              <label>Niche</label>
+              <div class="field"><select id="hashNiche">
+                <option value="tech">Tech</option>
+                <option value="design">Design</option>
+                <option value="business">Business</option>
+                <option value="lifestyle">Lifestyle</option>
+              </select></div>
+            </div>
+            <div class="group" style="flex:1">
+              <label>Count</label>
+              <div class="field"><input type="number" id="hashCount" min="3" max="30" value="15" /></div>
+            </div>
+          </div>
+          <div class="row mt-12">
+            <button class="btn small" id="hashGen"># Generate</button>
+            <button class="btn small ghost" id="hashCopy">⧉ Copy</button>
+          </div>
+          <div class="output-box mt-12" id="hashOut"><span class="dim">No hashtags generated yet.</span></div>
+        </div>
+
+        <!-- Story tab -->
+        <div class="tab-pane hidden" data-pane="story">
+          <div class="row">
+            <div class="group" style="flex:1">
+              <label>Hook Position</label>
+              <div class="field"><select id="storyPos">
+                <option value="top">Top</option>
+                <option value="mid" selected>Middle</option>
+                <option value="bot">Bottom</option>
+              </select></div>
+            </div>
+            <div class="group" style="flex:1">
+              <label>Theme</label>
+              <div class="field"><select id="storyTheme">
+                <option value="growth">Growth</option>
+                <option value="mystery">Mystery</option>
+                <option value="craft">Craft</option>
+                <option value="rebel">Rebel</option>
+              </select></div>
+            </div>
+          </div>
+          <div class="row mt-12">
+            <button class="btn small" id="storyGen">✦ Generate Story</button>
+            <button class="btn small ghost" id="storyCopy">⧉ Copy</button>
+          </div>
+          <div class="row mt-12" style="gap:18px; align-items:flex-start;">
+            <div class="story" id="storyStage">
+              <span class="meta">story</span>
+              <div class="hook mid" id="storyHook">—</div>
+            </div>
+            <div class="output-box" style="flex:1" id="storyOut"><span class="dim">No story generated yet.</span></div>
+          </div>
+        </div>
+
+        <!-- Quote tab -->
+        <div class="tab-pane hidden" data-pane="quote">
+          <div class="row">
+            <button class="btn small" id="quoteGen">⟳ New Quote</button>
+            <button class="btn small ghost" id="quoteCopy">⧉ Copy</button>
+          </div>
+          <div class="quote mt-12" id="quoteOut">"Press <span class="acid">⟳ New Quote</span> to forge one."<span class="who">— Grid Forge</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GIFT UPLOADER + EMBED -->
+    <section class="panel">
+      <header>
+        <h2>⑤ Gift Vault</h2>
+        <span class="sub">hidden easter eggs</span>
+      </header>
+      <div class="body">
+        <div class="row">
+          <button class="btn small ghost" id="giftUploadBtn">⤴ Upload Gift</button>
+          <input type="file" id="giftInput" accept="image/*" style="display:none" />
+          <span class="dim small">A "gift" is an image hidden inside a cell.</span>
+        </div>
+        <div class="row mt-12">
+          <div class="group" style="flex:1">
+            <label>Embed Position</label>
+            <div class="field"><input type="number" id="giftPos" min="1" max="36" value="5" /></div>
+          </div>
+          <div class="group" style="flex:1">
+            <label>Egg Mode</label>
+            <div class="field"><select id="giftMode">
+              <option value="hidden">Hidden</option>
+              <option value="visible">Visible</option>
+              <option value="puzzle">Puzzle</option>
+              <option value="mystery">Mystery</option>
+            </select></div>
+          </div>
+        </div>
+        <div class="row mt-12">
+          <button class="btn small ember" id="embedGift">⟁ Embed Gift</button>
+          <button class="btn small ghost" id="clearGifts">Clear Gifts</button>
+        </div>
+
+        <div class="gallery mt-12" id="giftGallery" aria-label="gift gallery"></div>
+
+        <div class="row mt-16 between">
+          <div class="row">
+            <label class="switch">
+              <input type="checkbox" id="watermarkToggle" />
+              <span class="track"></span>
+              <span>QR Watermark</span>
+            </label>
+          </div>
+          <div class="row">
+            <span class="dim small">eggs in this grid: <span id="gridEggCount" class="acid">0</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- EASTER EGG VAULT -->
+  <section class="panel mt-16">
+    <header>
+      <h2>⑥ Easter Egg Vault</h2>
+      <span class="sub">10 secrets to find</span>
+    </header>
+    <div class="body">
+      <div class="vault" id="vault"></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="mt-16 dim tiny" style="text-align:center; padding: 20px 0;">
+    GRID FORGE v2.0 · Growth Edition · <span class="acid">ctrl+shift+g</span> for god mode · <span class="acid">click logo 7×</span> for surprise
+  </footer>
+</div>
+
+<!-- SOUND BAR -->
+<div class="soundbar off" id="soundbar">
+  <div class="eq"><i></i><i></i><i></i><i></i><i></i></div>
+  <span class="title">Ambient: <span id="soundName" class="acid">off</span></span>
+  <div class="row" style="margin-left:auto">
+    <select id="soundChoice" class="field">
+      <option value="off">Off</option>
+      <option value="forge">Forge Hum</option>
+      <option value="rain">Light Rain</option>
+      <option value="drone">Low Drone</option>
+    </select>
+    <button class="btn small" id="soundToggle">▶ Play</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="box">
+    <header>
+      <h3 id="modalTitle">Notice</h3>
+      <span class="close" id="modalClose">×</span>
+    </header>
+    <div class="body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   GRID FORGE v2.0 — Growth Edition
+   Single-page engine. All logic in vanilla JS.
+   ========================================================= */
+
+const state = {
+  images: [],          // [{ id, name, dataUrl }]
+  gifts: [],           // [{ id, name, dataUrl, mode, cellIndex }]
+  layout: '3x3',
+  border: 'none',
+  growth: false,
+  watermark: false,
+  selectedGift: null,
+  eggsUnlocked: new Set(),
+  embedPos: 5,
+  embedMode: 'hidden',
+  quoteIndex: 0,
+};
+
+/* --- LAYOUTS --- */
+const LAYOUTS = [
+  { key: '3x3',  text: '3×3', rows: 3, cols: 3 },
+  { key: '3x2',  text: '3×2', rows: 3, cols: 2 },
+  { key: '2x2',  text: '2×2', rows: 2, cols: 2 },
+  { key: '4x4',  text: '4×4', rows: 4, cols: 4 },
+  { key: '5x5',  text: '5×5', rows: 5, cols: 5 },
+  { key: '3x4',  text: '3×4', rows: 3, cols: 4 },
+  { key: '2x3',  text: '2×3', rows: 2, cols: 3 },
+  { key: '1x3',  text: '1×3', rows: 1, cols: 3 },
+  { key: '1x5',  text: '1×5', rows: 1, cols: 5 },
+  { key: '6x6',  text: '6×6', rows: 6, cols: 6 },
+  { key: '2x1',  text: '2×1', rows: 2, cols: 1 },
+  { key: '4x2',  text: '4×2', rows: 4, cols: 2 },
+];
+
+/* --- CAPTION TEMPLATES --- */
+const CAPTIONS = {
+  awareness: {
+    direct: ["Notice the work. Then the work notices you.", "If it's not visible, it's not real. Post it."],
+    poetic: ["A signal, sent quietly into the feed.", "Some posts are whispers. This one is a hush."],
+    playful: ["Hey you — yes you — scroll a little slower.", "Plot twist: this post is the main character."],
+    gritty: ["Stop decorating. Start declaring.", "Nobody owes you a like. Earn the stop."],
+  },
+  engagement: {
+    direct: ["Pick one. Defend it in the comments.", "Two paths. Which one are you?"],
+    poetic: ["A question, a doorway, a dare.", "Tell me your version — I'll trade you mine."],
+    playful: ["Be honest, which one is you? Be honest-er.", "Comment '🜂' if you've been here before."],
+    gritty: ["I don't want fans. I want sparring partners.", "Disagree? Good. Prove me wrong in writing."],
+  },
+  followers: {
+    direct: ["Follow for weekly deep cuts, not daily fluff.", "If this is the kind of work you want, follow."],
+    poetic: ["A small door for a particular kind of reader.", "Stay for the slow build."],
+    playful: ["I'm not for everyone. I'm for the right ones.", "Follow if you want more like this."],
+    gritty: ["Followers don't matter. The right ones do.", "If you get it, you get it."],
+  },
+  traffic: {
+    direct: ["Full breakdown on the blog. Link in bio.", "Read the long version → link in bio."],
+    poetic: ["A longer letter waits in the bio.", "The rest lives elsewhere. Bring your time."],
+    playful: ["There's more where this came from. Bio →", "Tiny preview, big read. Link in bio."],
+    gritty: ["Stop scrolling. Go read the long thing.", "The bio link has the part that actually helps."],
+  },
+};
+
+/* --- HASHTAG SETS --- */
+const HASHTAGS = {
+  tech: ['#buildinpublic', '#indiehacker', '#devlife', '#shipit', '#webdev', '#frontend', '#javascript', '#codenewbie', '#100DaysOfCode', '#nocode', '#saas', '#startup', '#productivity', '#focus', '#makersgonnamake'],
+  design: ['#designsystem', '#branding', '#typography', '#uidesign', '#ux', '#webdesign', '#artdirection', '#graphicdesign', '#designinspiration', '#logodesign', '#visualdesign', '#designlife', '#minimalism', '#gridbased', '#posterdesign'],
+  business: ['#entrepreneur', '#smallbusiness', '#businessowner', '#strategy', '#marketing', '#growth', '#leadership', '#founder', '#b2b', '#startupgrind', '#sales', '#operations', '#bootstrapped', '#remotework', '#productstrategy'],
+  lifestyle: ['#lifestyle', '#slowliving', '#mindfulness', '#morningroutine', '#selfcare', '#habit', '#journal', '#minimalism', '#coffeeculture', '#travel', '#wander', '#reading', '#photography', '#everyday', '#thingswelove'],
+};
+
+/* --- EASTER EGGS --- */
+const EGGS = [
+  { id: 'e1',  name: 'First Spark',   sym: '✦', mode: 'visible' },
+  { id: 'e2',  name: 'Hidden Frame',  sym: '▣', mode: 'hidden'  },
+  { id: 'e3',  name: 'Quiet Node',    sym: '◌', mode: 'mystery' },
+  { id: 'e4',  name: 'Forge Heart',   sym: '✺', mode: 'visible' },
+  { id: 'e5',  name: 'Lost Pixel',    sym: '◦', mode: 'puzzle'  },
+  { id: 'e6',  name: 'Signal',        sym: '◢', mode: 'hidden'  },
+  { id: 'e7',  name: 'Echo',          sym: '◇', mode: 'mystery' },
+  { id: 'e8',  name: 'Old Coin',      sym: '✜', mode: 'puzzle'  },
+  { id: 'e9',  name: 'Last Door',     sym: '✷', mode: 'hidden'  },
+  { id: 'e10', name: 'Final Key',     sym: '✪', mode: 'mystery' },
+];
+
+/* --- QUOTES --- */
+const QUOTES = [
+  { text: "The grid is honest. The grid remembers.", who: "Old Forger" },
+  { text: "Growth is a series of small, stubborn days.", who: "Unknown" },
+  { text: "If you can't place it, you can't find it.", who: "Vault Scribe" },
+  { text: "Make it once, then make it better, then make it real.", who: "Forge Lore" },
+  { text: "Posting is a long game played with short bursts.", who: "Growth" },
+  { text: "The feed is a river. You build the bank.", who: "Anonymous" },
+  { text: "Attention is rented. Taste is owned.", who: "A Friend" },
+  { text: "A 3×3 grid holds nine honest versions of you.", who: "Forge" },
+];
+
+/* --- LOGGING --- */
+function log(msg, type) {
+  const tb = document.getElementById('termBody');
+  const p = document.createElement('p');
+  const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
+  p.innerHTML = `<span class="dim">[${ts}]</span> <span class="${type || ''}">${msg}</span>`;
+  tb.appendChild(p);
+  tb.scrollTop = tb.scrollHeight;
+}
+
+/* --- UPLOAD --- */
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+async function handleFiles(files) {
+  const valid = Array.from(files || []).filter(f => /^image\//.test(f.type));
+  if (valid.length === 0) {
+    log('no image files in drop', 'warn');
+    return;
+  }
+  for (const f of valid) {
+    const dataUrl = await readFileAsDataURL(f);
+    state.images.push({ id: 'i' + Date.now() + Math.random().toString(36).slice(2, 6), name: f.name, dataUrl });
+  }
+  log(`+${valid.length} image(s) ingested. total=${state.images.length}`, 'ok');
+  renderThumbs();
+}
+
+function renderThumbs() {
+  const wrap = document.getElementById('thumbs');
+  wrap.innerHTML = '';
+  state.images.forEach((img, i) => {
+    const t = document.createElement('div');
+    t.className = 'thumb';
+    t.innerHTML = `<img alt="" src="${img.dataUrl}" /><span class="x" data-i="${i}">×</span>`;
+    wrap.appendChild(t);
+  });
+  wrap.querySelectorAll('.x').forEach(el => {
+    el.addEventListener('click', e => {
+      const i = parseInt(el.getAttribute('data-i'), 10);
+      state.images.splice(i, 1);
+      renderThumbs();
+      log(`removed image #${i + 1}. total=${state.images.length}`, 'warn');
+    });
+  });
+  document.getElementById('imgCount').textContent = state.images.length;
+}
+
+/* --- LAYOUTS RENDER --- */
+function renderLayouts() {
+  const wrap = document.getElementById('layoutGrid');
+  wrap.innerHTML = '';
+  LAYOUTS.forEach(L => {
+    const el = document.createElement('div');
+    el.className = 'layout' + (L.key === state.layout ? ' selected' : '');
+    el.setAttribute('data-key', L.key);
+    el.innerHTML = `
+      <div class="mini" style="grid-template-columns: repeat(${L.cols}, 1fr); grid-template-rows: repeat(${L.rows}, 1fr);">
+        ${'<i></i>'.repeat(L.rows * L.cols)}
+      </div>
+      <span class="label">${L.text}</span>
+    `;
+    el.addEventListener('click', () => {
+      state.layout = L.key;
+      renderLayouts();
+      log(`layout → ${L.text}`, 'acid');
+    });
+    wrap.appendChild(el);
+  });
+}
+
+/* --- BORDER BUTTONS --- */
+function bindBorder() {
+  document.querySelectorAll('[data-border]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.border = btn.getAttribute('data-border');
+      log(`border → ${state.border}`, 'acid');
+      document.getElementById('forgeStage').firstElementChild?.classList && updateBorderClass();
+    });
+  });
+}
+function updateBorderClass() {
+  const stage = document.getElementById('forgeStage');
+  const grid = stage.querySelector('.grid-canvas');
+  if (!grid) return;
+  grid.className = 'grid-canvas border-' + state.border;
+}
+
+/* --- FORGE --- */
+function getLayout(key) {
+  return LAYOUTS.find(l => l.key === key) || LAYOUTS[0];
+}
+
+function forge() {
+  const L = getLayout(state.layout);
+  const total = L.rows * L.cols;
+  if (state.images.length === 0) {
+    log('forge aborted: no images', 'err');
+    flash('Upload at least one image first.');
+    return;
+  }
+  if (state.images.length < total) {
+    log(`forge warning: only ${state.images.length}/${total} cells filled`, 'warn');
+  }
+
+  // Determine order: growth mode → reverse post order (Instagram reads bottom-up)
+  let order = state.images.slice(0, total);
+  while (order.length < total) {
+    // pad with last image
+    order.push(state.images[order.length % state.images.length]);
+  }
+  if (state.growth) {
+    order = order.slice().reverse();
+    log('growth mode: order reversed for IG scroll-up reading', 'acid');
+  }
+
+  const stage = document.getElementById('forgeStage');
+  stage.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'grid-canvas border-' + state.border;
+  grid.style.gridTemplateColumns = `repeat(${L.cols}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${L.rows}, 1fr)`;
+  grid.style.width = Math.min(560, L.cols * 120) + 'px';
+  grid.style.aspectRatio = `${L.cols} / ${L.rows}`;
+
+  const lastImage = state.images[state.images.length - 1];
+  while (order.length < total) {
+    // pad with the last uploaded image when there are not enough uploads
+    order.push(lastImage);
+  }
+
+  for (let i = 0; i < total; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    const img = document.createElement('img');
+    img.src = order[i].dataUrl;
+    img.alt = '';
+    cell.appendChild(img);
+
+    // cell number
+    const num = document.createElement('span');
+    num.className = 'num';
+    num.textContent = (i + 1).toString().padStart(2, '0');
+    cell.appendChild(num);
+
+    // gift overlay
+    const gift = state.gifts.find(g => g.cellIndex === i + 1);
+    if (gift) {
+      if (gift.mode === 'puzzle') {
+        const ov = document.createElement('div');
+        ov.className = 'puz';
+        ov.textContent = '?';
+        ov.addEventListener('click', () => {
+          ov.remove();
+          img.style.display = 'block';
+          revealEgg('e5');
+        });
+        img.style.display = 'none';
+        cell.appendChild(ov);
+      } else if (gift.mode === 'mystery') {
+        cell.style.outline = '1px solid var(--copper)';
+        cell.addEventListener('click', () => revealEgg('e7'));
+      } else if (gift.mode === 'hidden') {
+        // image already placed, no visible marker
+        cell.addEventListener('click', () => revealEgg('e2'));
+      } else { // visible
+        cell.style.outline = '1px solid var(--acid)';
+        revealEgg('e1');
+      }
+    }
+
+    grid.appendChild(cell);
+  }
+
+  // Watermark: a tiny QR-like block bottom-right
+  if (state.watermark) {
+    const wm = document.createElement('div');
+    wm.style.cssText = 'position:absolute;right:6px;bottom:6px;width:36px;height:36px;background:#fff;padding:3px;opacity:0.85;border:1px solid var(--line-2)';
+    wm.innerHTML = renderWatermark();
+    grid.style.position = 'relative';
+    grid.appendChild(wm);
+  }
+
+  stage.appendChild(grid);
+  document.getElementById('forgeMeta').textContent = `${L.text} · ${total} cells · ${state.gifts.length} gift(s) · ${state.border}`;
+  document.getElementById('gridEggCount').textContent = state.gifts.length;
+  log(`forged ${L.text} (${total} cells)`, 'ok');
+}
+
+function renderWatermark() {
+  // Tiny deterministic pattern
+  const size = 6;
+  let html = '<div style="display:grid;grid-template-columns:repeat('+size+',1fr);gap:1px;width:100%;height:100%">';
+  for (let i = 0; i < size * size; i++) {
+    const on = ((i * 7 + 3) % 5) < 3;
+    html += `<div style="background:${on ? '#000' : '#fff'}"></div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+/* --- EXPORT --- */
+async function exportGrid() {
+  const stage = document.getElementById('forgeStage');
+  const grid = stage.querySelector('.grid-canvas');
+  if (!grid) {
+    log('export aborted: nothing to export', 'err');
+    return;
+  }
+  const L = getLayout(state.layout);
+  const cellPx = 240;
+  const w = L.cols * cellPx;
+  const h = L.rows * cellPx;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, w, h);
+
+  const imgs = grid.querySelectorAll('.cell img');
+  for (let i = 0; i < imgs.length; i++) {
+    const col = i % L.cols;
+    const row = Math.floor(i / L.cols);
+    const x = col * cellPx;
+    const y = row * cellPx;
+    const im = imgs[i];
+    if (!im.complete) {
+      await new Promise(r => { im.onload = r; im.onerror = r; });
+    }
+    ctx.drawImage(im, x, y, cellPx, cellPx);
+
+    // cell number
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(x + 6, y + 6, 30, 18);
+    ctx.fillStyle = '#b6ff3c';
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText((i + 1).toString().padStart(2, '0'), x + 10, y + 20);
+  }
+
+  // watermark
+  if (state.watermark) {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(w - 60, h - 60, 48, 48);
+    ctx.fillStyle = '#000';
+    const s = 6;
+    const cs = 6;
+    for (let r = 0; r < s; r++) {
+      for (let c = 0; c < s; c++) {
+        const on = ((r * s + c) * 7 + 3) % 5 < 3;
+        if (on) ctx.fillRect(w - 60 + 4 + c * cs, h - 60 + 4 + r * cs, cs - 1, cs - 1);
+      }
+    }
+  }
+
+  const link = document.createElement('a');
+  link.download = `grid-forge-${state.layout}-${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  log('exported grid as PNG', 'ok');
+}
+
+/* --- GIFTS --- */
+function renderGifts() {
+  const wrap = document.getElementById('giftGallery');
+  wrap.innerHTML = '';
+  if (state.gifts.length === 0) {
+    wrap.innerHTML = '<span class="dim small">No gifts yet. Upload one to embed it in a cell.</span>';
+    return;
+  }
+  state.gifts.forEach(g => {
+    const el = document.createElement('div');
+    el.className = 'gift' + (state.selectedGift === g.id ? ' selected' : '');
+    el.innerHTML = `<img alt="" src="${g.dataUrl}" /><span class="gift-id">${g.id} · ${g.mode}</span>`;
+    el.addEventListener('click', () => {
+      state.selectedGift = g.id;
+      renderGifts();
+      log(`selected gift ${g.id} (${g.mode})`, 'acid');
+    });
+    el.addEventListener('dblclick', () => {
+      state.gifts = state.gifts.filter(x => x.id !== g.id);
+      renderGifts();
+      log(`removed gift ${g.id}`, 'warn');
+    });
+    wrap.appendChild(el);
+  });
+}
+
+function bindGifts() {
+  document.getElementById('giftUploadBtn').addEventListener('click', () => document.getElementById('giftInput').click());
+  document.getElementById('giftInput').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const dataUrl = await readFileAsDataURL(f);
+    const id = 'g' + (state.gifts.length + 1);
+    state.gifts.push({ id, name: f.name, dataUrl, mode: 'hidden', cellIndex: 0 });
+    state.selectedGift = id;
+    renderGifts();
+    log(`gift uploaded: ${id} (${f.name})`, 'ok');
+  });
+
+  document.getElementById('embedGift').addEventListener('click', () => {
+    if (!state.selectedGift) {
+      flash('Select a gift from the gallery first.');
+      return;
+    }
+    const pos = parseInt(document.getElementById('giftPos').value, 10) || 1;
+    const mode = document.getElementById('giftMode').value;
+    const g = state.gifts.find(x => x.id === state.selectedGift);
+    if (g) {
+      g.cellIndex = pos;
+      g.mode = mode;
+      log(`gift ${g.id} embedded at cell ${pos} (${mode})`, 'ok');
+      renderGifts();
+      forge();
+    }
+  });
+
+  document.getElementById('clearGifts').addEventListener('click', () => {
+    state.gifts = [];
+    state.selectedGift = null;
+    renderGifts();
+    log('all gifts cleared', 'warn');
+    forge();
+  });
+}
+
+/* --- CAPTION / HASHTAG / STORY / QUOTE --- */
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generateCaption() {
+  const goal = document.getElementById('capGoal').value;
+  const tone = document.getElementById('capTone').value;
+  const lines = CAPTIONS[goal][tone];
+  const line = pickRandom(lines);
+  const cta = pickRandom([
+    'Double tap if it landed.',
+    'Save for later.',
+    'Tag someone who needs this.',
+    'Drop a 🔥 if you agree.',
+    '— share it with a friend.',
+  ]);
+  return `${line}\n\n${cta}`;
+}
+
+function generateHashtags() {
+  const niche = document.getElementById('hashNiche').value;
+  const count = Math.max(3, Math.min(30, parseInt(document.getElementById('hashCount').value, 10) || 15));
+  const set = HASHTAGS[niche].slice();
+  // shuffle
+  for (let i = set.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [set[i], set[j]] = [set[j], set[i]];
+  }
+  return set.slice(0, count).join(' ');
+}
+
+function generateStory() {
+  const pos = document.getElementById('storyPos').value;
+  const theme = document.getElementById('storyTheme').value;
+  const hooks = {
+    growth: ["Tiny moves. Real growth.", "Day 1 → Day 365.", "Stack small wins."],
+    mystery: ["Something is coming.", "Read between the posts.", "Watch this space."],
+    craft:   ["Built by hand.", "No shortcuts taken.", "Slow craft > fast noise."],
+    rebel:   ["Stop optimizing. Start making.", "Burn the playbook.", "Make the thing."],
+  };
+  return { hook: pickRandom(hooks[theme]), pos };
+}
+
+function generateQuote() {
+  state.quoteIndex = (state.quoteIndex + 1) % QUOTES.length;
+  return QUOTES[state.quoteIndex];
+}
+
+function bindGrowth() {
+  document.querySelectorAll('#growthTabs .tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('#growthTabs .tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const name = t.getAttribute('data-tab');
+      document.querySelectorAll('.tab-pane').forEach(p => {
+        p.classList.toggle('hidden', p.getAttribute('data-pane') !== name);
+      });
+    });
+  });
+
+  document.getElementById('capGen').addEventListener('click', () => {
+    const out = generateCaption();
+    document.getElementById('capOut').textContent = out;
+    log('caption generated', 'ok');
+  });
+  document.getElementById('capCopy').addEventListener('click', () => {
+    const t = document.getElementById('capOut').textContent;
+    navigator.clipboard?.writeText(t).then(() => log('caption copied', 'ok'));
+  });
+
+  document.getElementById('hashGen').addEventListener('click', () => {
+    const out = generateHashtags();
+    document.getElementById('hashOut').textContent = out;
+    log('hashtags generated', 'ok');
+  });
+  document.getElementById('hashCopy').addEventListener('click', () => {
+    const t = document.getElementById('hashOut').textContent;
+    navigator.clipboard?.writeText(t).then(() => log('hashtags copied', 'ok'));
+  });
+
+  document.getElementById('storyGen').addEventListener('click', () => {
+    const { hook, pos } = generateStory();
+    const stage = document.getElementById('storyStage');
+    stage.querySelectorAll('.hook').forEach(h => h.classList.remove('top', 'mid', 'bot'));
+    const h = stage.querySelector('.hook');
+    h.classList.add(pos);
+    h.textContent = hook;
+    document.getElementById('storyOut').textContent = hook;
+    log('story generated', 'ok');
+  });
+  document.getElementById('storyCopy').addEventListener('click', () => {
+    const t = document.getElementById('storyOut').textContent;
+    navigator.clipboard?.writeText(t).then(() => log('story copied', 'ok'));
+  });
+
+  document.getElementById('quoteGen').addEventListener('click', () => {
+    const q = generateQuote();
+    document.getElementById('quoteOut').innerHTML = `"${q.text}"<span class="who">— ${q.who}</span>`;
+    log('quote generated', 'ok');
+  });
+  document.getElementById('quoteCopy').addEventListener('click', () => {
+    const t = document.getElementById('quoteOut').innerText;
+    navigator.clipboard?.writeText(t).then(() => log('quote copied', 'ok'));
+  });
+}
+
+/* --- EASTER EGGS --- */
+function renderVault() {
+  const wrap = document.getElementById('vault');
+  wrap.innerHTML = '';
+  EGGS.forEach(e => {
+    const div = document.createElement('div');
+    const unlocked = state.eggsUnlocked.has(e.id);
+    div.className = 'egg ' + e.mode + (unlocked ? ' unlocked' : ' locked');
+    div.innerHTML = `<span class="sym">${unlocked ? e.sym : '·'}</span><span class="tag">${unlocked ? e.name : '???'}</span>`;
+    if (unlocked) {
+      div.addEventListener('click', () => openModal(e.id, e.name, e));
+    }
+    wrap.appendChild(div);
+  });
+  document.getElementById('eggCountPill').textContent = `Eggs ${state.eggsUnlocked.size}/10`;
+}
+
+function revealEgg(id) {
+  if (!state.eggsUnlocked.has(id)) {
+    state.eggsUnlocked.add(id);
+    log(`🥚 egg unlocked: ${id}`, 'ok');
+    renderVault();
+  }
+}
+
+function openModal(id, name) {
+  const msgs = {
+    e1: "The First Spark — every forge starts with one image.",
+    e2: "Hidden Frame — what you don't show is part of the work.",
+    e3: "Quiet Node — not every cell needs to shout.",
+    e4: "Forge Heart — this is the center of the grid.",
+    e5: "Lost Pixel — sometimes you have to look closer.",
+    e6: "Signal — noise gets ignored. Signals travel.",
+    e7: "Echo — the grid remembers what you post.",
+    e8: "Old Coin — slow craft earns its reward.",
+    e9: "Last Door — finish the set, then post.",
+    e10: "Final Key — you've forged them all. Share it.",
+  };
+  document.getElementById('modalTitle').textContent = name;
+  document.getElementById('modalBody').innerHTML = `<p>${msgs[id] || 'A secret found.'}</p><p class="dim small">Egg ID: ${id}</p>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+/* --- MODAL --- */
+function bindModal() {
+  document.getElementById('modalClose').addEventListener('click', () => {
+    document.getElementById('modal').classList.remove('open');
+  });
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target.id === 'modal') document.getElementById('modal').classList.remove('open');
+  });
+}
+
+/* --- SOUND (Web Audio) --- */
+let audioCtx = null;
+let audioNodes = [];
+let soundChoice = 'off';
+
+function ensureAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      log('Web Audio not supported', 'warn');
+      return null;
+    }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function stopSound() {
+  audioNodes.forEach(n => { try { n.stop && n.stop(); } catch (e) {} try { n.disconnect && n.disconnect(); } catch (e) {} });
+  audioNodes = [];
+}
+
+function startSound(kind) {
+  stopSound();
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const master = ctx.createGain();
+  master.gain.value = 0.05;
+  master.connect(ctx.destination);
+
+  if (kind === 'forge') {
+    // forge hum: low saw + filtered noise
+    const o1 = ctx.createOscillator();
+    o1.type = 'sawtooth';
+    o1.frequency.value = 55;
+    const o2 = ctx.createOscillator();
+    o2.type = 'sine';
+    o2.frequency.value = 110;
+    const g = ctx.createGain(); g.gain.value = 0.3;
+    o1.connect(g); o2.connect(g); g.connect(master);
+    o1.start(); o2.start();
+    audioNodes.push(o1, o2, g);
+  } else if (kind === 'rain') {
+    // noise loop
+    const bufSize = 2 * ctx.sampleRate;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 1200;
+    src.connect(filter); filter.connect(master);
+    src.start();
+    audioNodes.push(src, filter);
+  } else if (kind === 'drone') {
+    const o1 = ctx.createOscillator();
+    o1.type = 'sine'; o1.frequency.value = 80;
+    const o2 = ctx.createOscillator();
+    o2.type = 'sine'; o2.frequency.value = 82.5;
+    const o3 = ctx.createOscillator();
+    o3.type = 'triangle'; o3.frequency.value = 162;
+    const g = ctx.createGain(); g.gain.value = 0.4;
+    o1.connect(g); o2.connect(g); o3.connect(g); g.connect(master);
+    o1.start(); o2.start(); o3.start();
+    audioNodes.push(o1, o2, o3, g);
+  }
+}
+
+function bindSound() {
+  const sb = document.getElementById('soundbar');
+  const sel = document.getElementById('soundChoice');
+  const btn = document.getElementById('soundToggle');
+  const name = document.getElementById('soundName');
+  btn.addEventListener('click', () => {
+    if (soundChoice !== 'off') {
+      stopSound();
+      soundChoice = 'off';
+      sb.classList.add('off');
+      name.textContent = 'off';
+      btn.textContent = '▶ Play';
+      return;
+    }
+    const v = sel.value;
+    if (v === 'off') return;
+    soundChoice = v;
+    startSound(v);
+    sb.classList.remove('off');
+    name.textContent = v;
+    btn.textContent = '■ Stop';
+  });
+}
+
+/* --- HELPERS --- */
+function flash(text) {
+  const m = document.getElementById('modal');
+  document.getElementById('modalTitle').textContent = 'Heads up';
+  document.getElementById('modalBody').innerHTML = `<p>${text}</p>`;
+  m.classList.add('open');
+}
+
+/* --- BOOT --- */
+function boot() {
+  log('grid-forge v2.0 booting…', 'acid');
+  log('terminal online · growth engine ready', 'ok');
+
+  // chamber
+  const chamber = document.getElementById('chamber');
+  const fileInput = document.getElementById('fileInput');
+  chamber.addEventListener('click', () => fileInput.click());
+  chamber.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+  ['dragenter', 'dragover'].forEach(ev => chamber.addEventListener(ev, e => { e.preventDefault(); chamber.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach(ev => chamber.addEventListener(ev, e => { e.preventDefault(); chamber.classList.remove('dragover'); }));
+  chamber.addEventListener('drop', e => { handleFiles(e.dataTransfer.files); });
+  fileInput.addEventListener('change', e => { handleFiles(e.target.files); fileInput.value = ''; });
+
+  // thumbs
+  document.getElementById('clearAll').addEventListener('click', () => {
+    state.images = []; renderThumbs(); log('cleared all images', 'warn');
+  });
+  document.getElementById('sortByName').addEventListener('click', () => {
+    state.images.sort((a, b) => a.name.localeCompare(b.name));
+    renderThumbs();
+    log('sorted by name', 'acid');
+  });
+  document.getElementById('reverseOrder').addEventListener('click', () => {
+    state.images.reverse();
+    renderThumbs();
+    log('reversed order', 'acid');
+  });
+
+  renderLayouts();
+  bindBorder();
+  bindGifts();
+  bindGrowth();
+  bindModal();
+  bindSound();
+  renderGifts();
+  renderVault();
+
+  document.getElementById('forgeBtn').addEventListener('click', forge);
+  document.getElementById('shuffleBtn').addEventListener('click', () => {
+    for (let i = state.images.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [state.images[i], state.images[j]] = [state.images[j], state.images[i]];
+    }
+    renderThumbs();
+    forge();
+    log('shuffled images + re-forged', 'acid');
+  });
+  document.getElementById('exportBtn').addEventListener('click', exportGrid);
+
+  document.getElementById('growthToggle').addEventListener('change', e => {
+    state.growth = e.target.checked;
+    document.getElementById('growthPill').textContent = 'Growth: ' + (state.growth ? 'On' : 'Off');
+    document.getElementById('growthPill').className = 'pill ' + (state.growth ? 'acid' : '');
+    log('growth mode → ' + (state.growth ? 'ON' : 'OFF'), 'acid');
+  });
+
+  document.getElementById('watermarkToggle').addEventListener('change', e => {
+    state.watermark = e.target.checked;
+    log('watermark → ' + (state.watermark ? 'ON' : 'OFF'), 'acid');
+    forge();
+  });
+
+  // god mode: ctrl+shift+g
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'g') {
+      e.preventDefault();
+      state.eggsUnlocked = new Set(EGGS.map(x => x.id));
+      renderVault();
+      log('GOD MODE: all eggs unlocked', 'ok');
+    }
+  });
+
+  // logo click counter (7)
+  let logoClicks = 0;
+  document.querySelector('.brand').addEventListener('click', () => {
+    logoClicks++;
+    if (logoClicks >= 7) {
+      logoClicks = 0;
+      revealEgg('e10');
+      flash('Surprise: the 7-click ritual unlocks the Final Key.');
+    }
+  });
+
+  // Start with a quote
+  setTimeout(() => {
+    const q = QUOTES[0];
+    document.getElementById('quoteOut').innerHTML = `"${q.text}"<span class="who">— ${q.who}</span>`;
+  }, 100);
+
+  // Default gift position
+  document.getElementById('giftPos').addEventListener('change', e => {
+    state.embedPos = parseInt(e.target.value, 10) || 1;
+  });
+  document.getElementById('giftMode').addEventListener('change', e => {
+    state.embedMode = e.target.value;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>

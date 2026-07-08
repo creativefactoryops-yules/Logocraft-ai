@@ -1,0 +1,7 @@
+- [x] Read lines 1-2000 of grow-grid.txt
+- [x] Read lines 2001-2707 of grow-grid.txt to find grid grow bug
+- [x] Extract Logocraft-ai-main.zip to get actual HTML
+- [x] Compare stripped source to actual HTML to identify discrepancies
+- [x] Identify the specific grid grow bug
+- [x] Apply fix to the HTML file
+- [ ] Redeploy to GitHub
