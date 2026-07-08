@@ -307,6 +307,17 @@
     display: grid; place-items: center;
     font-size: 14px; cursor: pointer;
   }
+  .grid-canvas .cell .upload-order {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    padding: 2px 4px;
+    font-size: 10px;
+    color: #fff;
+    background: rgba(0,0,0,0.55);
+    border-radius: 2px;
+    pointer-events: none;
+  }
 
   /* Border styles applied to .grid-canvas */
   .border-none { background: var(--void); gap: 2px; }
@@ -627,6 +638,7 @@
           <div class="row">
             <button class="btn small" id="forgeBtn">⚒ Forge</button>
             <button class="btn small copper" id="exportBtn">⇩ Export</button>
+            <button class="btn small copper" id="exportTilesBtn">⇩ Export IG Tiles</button>
             <button class="btn small ghost" id="shuffleBtn">⇄ Shuffle</button>
           </div>
         </div>
@@ -1050,6 +1062,19 @@ function getLayout(key) {
   return LAYOUTS.find(l => l.key === key) || LAYOUTS[0];
 }
 
+function buildGridOrder(total) {
+  const order = state.images.slice(0, total);
+  while (order.length < total) {
+    order.push(state.images[order.length % state.images.length]);
+  }
+  return order;
+}
+
+function getInstagramUploadOrder(total) {
+  const order = buildGridOrder(total);
+  return state.growth ? order.slice().reverse() : order;
+}
+
 function forge() {
   const L = getLayout(state.layout);
   const total = L.rows * L.cols;
@@ -1062,15 +1087,9 @@ function forge() {
     log(`forge warning: only ${state.images.length}/${total} cells filled`, 'warn');
   }
 
-  // Determine order: growth mode → reverse post order (Instagram reads bottom-up)
-  let order = state.images.slice(0, total);
-  while (order.length < total) {
-    // pad with last image
-    order.push(state.images[order.length % state.images.length]);
-  }
+  const order = buildGridOrder(total);
   if (state.growth) {
-    order = order.slice().reverse();
-    log('growth mode: order reversed for IG scroll-up reading', 'acid');
+    log('growth mode active: preview shows final grid; Instagram export will preserve upload order', 'acid');
   }
 
   const stage = document.getElementById('forgeStage');
@@ -1081,12 +1100,6 @@ function forge() {
   grid.style.gridTemplateRows = `repeat(${L.rows}, 1fr)`;
   grid.style.width = Math.min(560, L.cols * 120) + 'px';
   grid.style.aspectRatio = `${L.cols} / ${L.rows}`;
-
-  const lastImage = state.images[state.images.length - 1];
-  while (order.length < total) {
-    // pad with the last uploaded image when there are not enough uploads
-    order.push(lastImage);
-  }
 
   for (let i = 0; i < total; i++) {
     const cell = document.createElement('div');
@@ -1101,6 +1114,13 @@ function forge() {
     num.className = 'num';
     num.textContent = (i + 1).toString().padStart(2, '0');
     cell.appendChild(num);
+
+    if (state.growth) {
+      const orderTag = document.createElement('span');
+      orderTag.className = 'upload-order';
+      orderTag.textContent = `upload ${String(total - i).padStart(2, '0')}`;
+      cell.appendChild(orderTag);
+    }
 
     // gift overlay
     const gift = state.gifts.find(g => g.cellIndex === i + 1);
@@ -1220,6 +1240,40 @@ async function exportGrid() {
   link.href = canvas.toDataURL('image/png');
   link.click();
   log('exported grid as PNG', 'ok');
+}
+
+async function exportGridTiles() {
+  const L = getLayout(state.layout);
+  const total = L.rows * L.cols;
+  if (state.images.length === 0) {
+    log('export aborted: no images', 'err');
+    flash('Upload at least one image first.');
+    return;
+  }
+
+  const order = getInstagramUploadOrder(total);
+  const cellPx = 240;
+  const canvas = document.createElement('canvas');
+  canvas.width = cellPx;
+  canvas.height = cellPx;
+  const ctx = canvas.getContext('2d');
+
+  for (let i = 0; i < order.length; i++) {
+    const img = new Image();
+    img.src = order[i].dataUrl;
+    await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+    ctx.clearRect(0, 0, cellPx, cellPx);
+    ctx.drawImage(img, 0, 0, cellPx, cellPx);
+
+    const link = document.createElement('a');
+    link.download = `grid-forge-${state.layout}-ig-${String(i + 1).padStart(2, '0')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  log(`exported ${order.length} Instagram tile(s)`, 'ok');
 }
 
 /* --- GIFTS --- */
@@ -1597,6 +1651,7 @@ function boot() {
     log('shuffled images + re-forged', 'acid');
   });
   document.getElementById('exportBtn').addEventListener('click', exportGrid);
+  document.getElementById('exportTilesBtn').addEventListener('click', exportGridTiles);
 
   document.getElementById('growthToggle').addEventListener('change', e => {
     state.growth = e.target.checked;
